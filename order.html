@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我家吃什么 - 家庭饮食助手</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#FF6B6B',
+              'primary-dark': '#E05658',
+              'primary-light': '#FFA07A',
+              surface: '#1C1C24',
+              'surface-soft': '#232330',
+              'surface-strong': '#13131A',
+              'accent-green': '#34D399',
+              'accent-yellow': '#FACC15',
+              'accent-blue': '#38BDF8',
+            },
+            fontFamily: {
+              outfit: ['Outfit', 'sans-serif'],
+            },
+            boxShadow: {
+              glow: '0 18px 55px rgba(255, 107, 107, 0.35)',
+            },
+          },
+        },
+      };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: 'Outfit', sans-serif;
+      }
+      .material-icons {
+        font-family: 'Material Icons';
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        display: inline-block;
+        line-height: 1;
+        text-transform: none;
+        letter-spacing: normal;
+        word-wrap: normal;
+        white-space: nowrap;
+        direction: ltr;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      .soft-scroll::-webkit-scrollbar {
+        width: 6px;
+      }
+      .soft-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .soft-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 999px;
+      }
+      .flyout {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%) scale(0.96);
+        transform-origin: right center;
+        display: flex;
+        align-items: center;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: 10;
+      }
+      .flyout[data-open='true'] {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(-50%) scale(1);
+      }
+      .controls-hidden {
+        visibility: hidden;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen bg-[radial-gradient(circle_at_top,#FF6B6B22,transparent_55%),linear-gradient(140deg,#13131A,#191926,#13131A)] text-white p-6"
+  >
+    <div class="max-w-full mx-auto">
+      <header class="mb-8 flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase tracking-[0.5em] text-white/40">
+            Family Meal Planner
+          </p>
+          <h1 class="mt-2 text-3xl font-semibold">
+            <span
+              class="text-transparent bg-gradient-to-r from-primary-light via-primary to-rose-400 bg-clip-text"
+              >我家吃什么</span
+            >
+          </h1>
+        </div>
+        <div
+          class="hidden lg:flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur"
+        >
+          <span class="material-icons text-primary-light">local_dining</span>
+          <div>
+            <p class="text-xs uppercase tracking-[0.35em] text-white/50">
+              Design Preview
+            </p>
+            <p class="text-sm text-white/70">Tailwind UI Prototype</p>
+          </div>
+        </div>
+      </header>
+      <div class="app-container flex justify-center pb-16">
+        <!-- 点餐页 -->
+        <div
+          id="order"
+          class="relative w-[1024px] h-[768px] overflow-hidden rounded-[28px] border border-white/10 bg-surface/90 shadow-[0_28px_80px_rgba(14,10,32,0.65)] backdrop-blur"
+        >
+          <div
+            class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.3),transparent_55%)]"
+          ></div>
+          <div class="relative flex h-full flex-col px-10 py-8">
+            <header class="flex items-center justify-end">
+              <div id="controlWrapper" class="relative flex items-center">
+                <div id="actionButtons" class="flex items-center gap-3">
+                  <button
+                    type="button"
+                    id="toggleSearch"
+                    aria-expanded="false"
+                    aria-controls="searchPanel"
+                    class="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <span class="material-icons">search</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="toggleNav"
+                    aria-expanded="false"
+                    aria-controls="navPanel"
+                    class="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <span class="material-icons">menu</span>
+                  </button>
+                </div>
+
+                <div
+                  id="searchPanel"
+                  class="flyout gap-3 rounded-[24px] border border-white/10 bg-white/5 px-5 py-3 text-sm text-white backdrop-blur"
+                  data-open="false"
+                  role="search"
+                  aria-hidden="true"
+                >
+                  <span class="material-icons text-white/40">search</span>
+                  <input
+                    type="text"
+                    placeholder="搜索菜品或食材，如“鸡胸肉”"
+                    class="w-64 bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
+                  />
+                  <span class="material-icons text-white/30">mic_none</span>
+                </div>
+
+                <nav
+                  id="navPanel"
+                  class="flyout flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/70 backdrop-blur"
+                  data-open="false"
+                  aria-label="主导航"
+                  aria-hidden="true"
+                >
+                  <a
+                    href="recommend.html"
+                    class="flex items-center gap-1 rounded-full px-3 py-1.5 font-medium whitespace-nowrap transition hover:bg-white/10 hover:text-white"
+                  >
+                    <span class="material-icons text-sm">auto_awesome</span>
+                    推荐
+                  </a>
+                  <a
+                    href="order.html"
+                    class="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 font-semibold text-primary whitespace-nowrap transition hover:bg-primary/15 hover:text-primary-light"
+                  >
+                    <span class="material-icons text-sm">restaurant_menu</span>
+                    点餐
+                  </a>
+                  <a
+                    href="random.html"
+                    class="flex items-center gap-1 rounded-full px-3 py-1.5 font-medium whitespace-nowrap transition hover:bg-white/10 hover:text-white"
+                  >
+                    <span class="material-icons text-sm">casino</span>
+                    随机
+                  </a>
+                  <a
+                    href="menu.html"
+                    class="flex items-center gap-1 rounded-full px-3 py-1.5 font-medium whitespace-nowrap transition hover:bg-white/10 hover:text-white"
+                  >
+                    <span class="material-icons text-sm">assignment</span>
+                    菜单
+                  </a>
+                </nav>
+              </div>
+            </header>
+
+            <div class="flex flex-1 flex-col justify-between">
+              <div class="grid flex-1 grid-cols-12 gap-10 items-center">
+                <section
+                  class="relative col-span-8 flex flex-col justify-between gap-8"
+                >
+                  <div
+                    class="relative flex flex-1 items-center gap-12 overflow-visible"
+                  >
+                    <div class="relative">
+                      <div
+                        class="pointer-events-none absolute -left-24 top-4 h-[360px] w-[360px] rounded-full bg-gradient-to-br from-primary/25 via-primary-light/20 to-transparent blur-3xl"
+                      ></div>
+                      <div
+                        class="pointer-events-none absolute -left-14 -top-8 h-[420px] w-[240px] -rotate-12 rounded-[120px] bg-gradient-to-b from-white/20 via-white/5 to-transparent"
+                      ></div>
+                      <div
+                        class="relative flex h-[320px] w-[320px] items-center justify-center rounded-full bg-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+                      >
+                        <img
+                          src="https://images.pexels.com/photos/2280545/pexels-photo-2280545.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260"
+                          alt="蜜汁烤鸡腿"
+                          class="h-[260px] w-[260px] rounded-full object-cover shadow-[0_18px_45px_rgba(255,107,107,0.32)]"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="relative z-10 max-w-lg space-y-5">
+                      <div class="space-y-3">
+                        <div
+                          class="pointer-events-none absolute -left-10 -top-16 h-[420px] w-[420px] -rotate-[25deg] rounded-full bg-gradient-to-br from-rose-300/40 via-transparent to-transparent blur-3xl"
+                        ></div>
+                        <p
+                          class="text-xs uppercase tracking-[0.35em] text-white/40"
+                        >
+                          #1 家庭最爱菜
+                        </p>
+                        <h3 class="text-[38px] font-semibold leading-tight">
+                          蜜汁
+                          <span
+                            class="text-transparent bg-gradient-to-r from-primary-light via-primary to-rose-400 bg-clip-text"
+                            >烤鸡腿</span
+                          >
+                        </h3>
+                        <div
+                          class="flex flex-wrap gap-2 text-[11px] text-white/60"
+                        >
+                          <span
+                            class="rounded-full border border-white/20 px-3 py-1 uppercase tracking-[0.25em]"
+                            >热销</span
+                          >
+                          <span
+                            class="rounded-full border border-white/10 px-3 py-1 text-white/50"
+                            >高蛋白</span
+                          >
+                          <span
+                            class="rounded-full border border-white/10 px-3 py-1 text-white/50"
+                            >低脂</span
+                          >
+                        </div>
+                      </div>
+                      <p class="text-base leading-relaxed text-white/70">
+                        低脂去皮鸡腿，搭配自制果蜜腌料，慢火烘烤至外酥里嫩，
+                        甜咸平衡让全家都爱不释口。
+                      </p>
+                      <div
+                        class="flex items-center gap-6 text-xs text-white/60"
+                      >
+                        <div class="flex items-center gap-2">
+                          <span
+                            class="material-icons text-sm text-primary-light"
+                            >local_fire_department</span
+                          >
+                          <span>热量 420 kcal</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <span class="material-icons text-sm text-accent-green"
+                            >restaurant</span
+                          >
+                          <span>家庭喜爱度 98%</span>
+                        </div>
+                      </div>
+                      <div class="flex gap-4 text-xs font-semibold">
+                        <button
+                          class="flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-5 py-2 text-white transition hover:bg-white/20"
+                        >
+                          <span class="material-icons text-sm">play_arrow</span>
+                          观看制作
+                        </button>
+                        <button
+                          class="flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-5 py-2 text-primary-light transition hover:bg-primary/25"
+                        >
+                          <span class="material-icons text-sm">add</span>
+                          加入菜单
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-8 flex items-center justify-between">
+                    <button
+                      class="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 transition hover:text-white"
+                    >
+                      <span class="material-icons">chevron_left</span>
+                    </button>
+                    <div
+                      class="flex flex-1 items-center justify-center gap-4 px-6"
+                    >
+                      <button
+                        class="flex flex-col items-center gap-2 rounded-[22px] border border-white/10 bg-white/5 px-[18px] py-3 text-[11px] text-white/70 transition hover:text-white"
+                      >
+                        <div class="h-12 w-12 overflow-hidden rounded-2xl">
+                          <img
+                            src="https://images.pexels.com/photos/2280545/pexels-photo-2280545.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260"
+                            alt="蜜汁烤鸡腿"
+                            class="h-full w-full object-cover"
+                          />
+                        </div>
+                        蜜汁烤鸡腿
+                      </button>
+                      <button
+                        class="flex flex-col items-center gap-2 rounded-[22px] border border-white/10 bg-white/5 px-[18px] py-3 text-[11px] text-white/70 transition hover:text-white"
+                      >
+                        <div class="h-12 w-12 overflow-hidden rounded-2xl">
+                          <img
+                            src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=720&q=80"
+                            alt="麻婆豆腐"
+                            class="h-full w-full object-cover"
+                          />
+                        </div>
+                        家常麻婆豆腐
+                      </button>
+                      <button
+                        class="flex flex-col items-center gap-2 rounded-[22px] border border-white/10 bg-white/5 px-[18px] py-3 text-[11px] text-white/70 transition hover:text-white"
+                      >
+                        <div class="h-12 w-12 overflow-hidden rounded-2xl">
+                          <img
+                            src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=240&q=80"
+                            alt="鲜虾冬瓜汤"
+                            class="h-full w-full object-cover"
+                          />
+                        </div>
+                        鲜虾冬瓜汤
+                      </button>
+                      <button
+                        class="flex flex-col items-center gap-2 rounded-[22px] border border-white/10 bg-white/5 px-[18px] py-3 text-[11px] text-white/70 transition hover:text-white"
+                      >
+                        <div class="h-12 w-12 overflow-hidden rounded-2xl">
+                          <img
+                            src="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260"
+                            alt="番茄罗勒意面"
+                            class="h-full w-full object-cover"
+                          />
+                        </div>
+                        番茄罗勒意面
+                      </button>
+                    </div>
+                    <button
+                      class="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 transition hover:text-white"
+                    >
+                      <span class="material-icons">chevron_right</span>
+                    </button>
+                  </div>
+                </section>
+                <aside class="col-span-4 flex flex-col gap-6">
+                  <div
+                    class="rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(254,215,170,0.12),transparent_55%)] bg-surface-soft/95 p-5"
+                  >
+                    <div
+                      class="flex items-center gap-3 text-sm font-semibold text-white/60"
+                    >
+                      <button
+                        type="button"
+                        data-tab-trigger="ingredients"
+                        data-tab-default="true"
+                        class="order-tab-trigger rounded-full border px-4 py-1.5 transition"
+                      >
+                        食材准备
+                      </button>
+                      <button
+                        type="button"
+                        data-tab-trigger="steps"
+                        class="order-tab-trigger rounded-full border px-4 py-1.5 transition"
+                      >
+                        制作步骤
+                      </button>
+                    </div>
+                    <div class="mt-4">
+                      <div
+                        data-tab-content="ingredients"
+                        class="order-tab-panel space-y-2 text-sm text-white/70"
+                        aria-hidden="false"
+                      >
+                        <ul class="space-y-2">
+                          <li class="flex items-center justify-between">
+                            <span>新鲜鲈鱼</span>
+                            <span class="text-white/50">1 条 (~800g)</span>
+                          </li>
+                          <li class="flex items-center justify-between">
+                            <span>姜丝</span>
+                            <span class="text-white/50">20 g</span>
+                          </li>
+                          <li class="flex items-center justify-between">
+                            <span>葱段</span>
+                            <span class="text-white/50">3 根</span>
+                          </li>
+                          <li class="flex items-center justify-between">
+                            <span>蒸鱼豉油</span>
+                            <span class="text-white/50">20 ml</span>
+                          </li>
+                          <li class="flex items-center justify-between">
+                            <span>香菜</span>
+                            <span class="text-white/50">适量</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div
+                        data-tab-content="steps"
+                        class="order-tab-panel hidden space-y-3 text-sm text-white/70"
+                        aria-hidden="true"
+                      >
+                        <ol class="space-y-3">
+                          <li>
+                            <span
+                              class="mr-2 rounded-full bg-primary/20 px-2 py-1 text-xs font-semibold text-primary-light"
+                              >1</span
+                            >
+                            清洗鲈鱼，打花刀，抹少许盐和料酒腌 10 分钟。
+                          </li>
+                          <li>
+                            <span
+                              class="mr-2 rounded-full bg-primary/20 px-2 py-1 text-xs font-semibold text-primary-light"
+                              >2</span
+                            >
+                            盘底铺姜丝、葱段，放入鱼身，水开后大火蒸 8-10 分钟。
+                          </li>
+                          <li>
+                            <span
+                              class="mr-2 rounded-full bg-primary/20 px-2 py-1 text-xs font-semibold text-primary-light"
+                              >3</span
+                            >
+                            蒸好取出倒掉蒸出的汤汁，铺上葱丝、香菜。
+                          </li>
+                          <li>
+                            <span
+                              class="mr-2 rounded-full bg-primary/20 px-2 py-1 text-xs font-semibold text-primary-light"
+                              >4</span
+                            >
+                            热锅加少许油浇在葱丝上，再淋入蒸鱼豉油即可。
+                          </li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+
+              <div class="-mt-3 flex flex-wrap gap-2 text-xs pl-6">
+                <button
+                  class="rounded-full border border-white/10 px-3.5 py-1.5 text-white/70 transition hover:text-white"
+                >
+                  肉类
+                </button>
+                <button
+                  class="rounded-full border border-white/10 px-3.5 py-1.5 text-white/70 transition hover:text-white"
+                >
+                  素食
+                </button>
+                <button
+                  class="rounded-full border border-white/10 px-3.5 py-1.5 text-white/70 transition hover:text-white"
+                >
+                  海鲜
+                </button>
+                <button
+                  class="rounded-full border border-white/10 px-3.5 py-1.5 text-white/70 transition hover:text-white"
+                >
+                  汤品
+                </button>
+                <button
+                  class="rounded-full border border-white/10 px-3.5 py-1.5 text-white/70 transition hover:text-white"
+                >
+                  主食
+                </button>
+                <button
+                  class="rounded-full border border-white/10 px-3.5 py-1.5 text-white/70 transition hover:text-white"
+                >
+                  甜品
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const wrapper = document.getElementById('controlWrapper');
+        const actionButtons = document.getElementById('actionButtons');
+        const searchButton = document.getElementById('toggleSearch');
+        const navButton = document.getElementById('toggleNav');
+        const searchPanel = document.getElementById('searchPanel');
+        const navPanel = document.getElementById('navPanel');
+
+        const controls = [
+          { button: searchButton, panel: searchPanel },
+          { button: navButton, panel: navPanel },
+        ].filter(({ button, panel }) => button && panel);
+
+        let activeControl = null;
+
+        const closePanels = () => {
+          controls.forEach(({ button, panel }) => {
+            panel.dataset.open = 'false';
+            panel.setAttribute('aria-hidden', 'true');
+            button.setAttribute('aria-expanded', 'false');
+          });
+          if (actionButtons) actionButtons.classList.remove('controls-hidden');
+          activeControl = null;
+        };
+
+        const openPanel = (control) => {
+          if (!control) return;
+          if (activeControl === control) {
+            closePanels();
+            return;
+          }
+          closePanels();
+          control.panel.dataset.open = 'true';
+          control.panel.setAttribute('aria-hidden', 'false');
+          control.button.setAttribute('aria-expanded', 'true');
+          if (actionButtons) actionButtons.classList.add('controls-hidden');
+          activeControl = control;
+        };
+
+        controls.forEach((control) => {
+          control.button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            openPanel(control);
+          });
+        });
+
+        closePanels();
+
+        document.addEventListener('click', (event) => {
+          if (activeControl && (!wrapper || !wrapper.contains(event.target))) {
+            closePanels();
+          }
+        });
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            closePanels();
+          }
+        });
+
+        const tabTriggers = Array.from(
+          document.querySelectorAll('.order-tab-trigger')
+        );
+        const tabPanels = Array.from(
+          document.querySelectorAll('.order-tab-panel')
+        );
+
+        const setTabState = (trigger, isActive) => {
+          const add = (cls) => trigger.classList.add(cls);
+          const remove = (cls) => trigger.classList.remove(cls);
+          if (isActive) {
+            add('border-primary/40');
+            add('bg-primary/15');
+            add('text-primary-light');
+            remove('border-white/15');
+            remove('bg-white/5');
+            remove('text-white/60');
+            remove('hover:border-white/30');
+            remove('hover:text-white');
+          } else {
+            add('border-white/15');
+            add('bg-white/5');
+            add('text-white/60');
+            add('hover:border-white/30');
+            add('hover:text-white');
+            remove('border-primary/40');
+            remove('bg-primary/15');
+            remove('text-primary-light');
+          }
+        };
+
+        const activateTab = (name) => {
+          tabTriggers.forEach((trigger) => {
+            const isActive = trigger.dataset.tabTrigger === name;
+            setTabState(trigger, isActive);
+          });
+          tabPanels.forEach((panel) => {
+            const isActive = panel.dataset.tabContent === name;
+            panel.classList.toggle('hidden', !isActive);
+            panel.setAttribute('aria-hidden', String(!isActive));
+          });
+        };
+
+        tabTriggers.forEach((trigger) => {
+          trigger.addEventListener('click', () => {
+            activateTab(trigger.dataset.tabTrigger);
+          });
+        });
+
+        const defaultTab =
+          tabTriggers.find((trigger) => trigger.dataset.tabDefault === 'true')
+            ?.dataset.tabTrigger || tabTriggers[0]?.dataset.tabTrigger;
+        if (defaultTab) activateTab(defaultTab);
+      });
+    </script>
+  </body>
+</html>
